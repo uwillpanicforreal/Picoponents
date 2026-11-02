@@ -1,5 +1,5 @@
-# Docs
-docs/
+# Private docs (public wiki goes in docs/)
+privatedocs/
 
 # Claude
 CLAUDE.md
