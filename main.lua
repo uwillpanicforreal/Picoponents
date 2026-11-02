@@ -1,0 +1,1 @@
+-- Picoponents (c) 2026 uwillpanic, MIT License
