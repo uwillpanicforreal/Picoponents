@@ -4,7 +4,7 @@ An ECS system for Picotron
 ## AI disclaimer
 For the sake of transparency, let me confirm. I did use claude code as part of the deveopment of this system.
 
-In this particular project, which is largely a learning exercise for myself, I'm using Claude to develop a lesson plan for myself around developing an efficient ECS. At no point was or will Claude ever be permitted to write code directly, though I may use it to generate small snippets that I paraphrase. It may also be used for debugging, just to track down bugs without too much fuss. All that and some basic code reviews. If you have ethical concerns about AI and its use, I do too. This is a use case I personally feel is a "good" use of AI, but if you don't, no judgement. Figured I'd make sure you at least get the chance to make that choice yourself.
+In this particular project, which is largely a learning exercise for myself, I'm using Claude to develop a lesson plan for myself around developing an efficient ECS. At no point was or will Claude ever be permitted to write code directly, though I may use it to generate small snippets that I paraphrase, or method headers that I fill in myself. It may also be used for debugging, just to track down bugs without too much fuss. All that and some basic code reviews. If you have ethical concerns about AI and its use, I do too. This is a use case I personally feel is a "good" use of AI, but if you don't, no judgement. Figured I'd make sure you at least get the chance to make that choice yourself.
 
 It's very important to me that the exact extent of AI use in my projects is very transparent. If you feel unclear about how it is used in this project, or you feel I've used it outside the scope outlined hear, please let me know so I can update this section.
 
