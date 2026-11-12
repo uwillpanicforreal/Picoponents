@@ -14,7 +14,7 @@ I've always bounced pretty hard off of game dev because pretty much every engine
 But yeah, I hate using game engines for the same reason I hate using IDEs. Even the lightest one is heavier than I like. I want exactly the features I use, I want to understand exactly how those features work, and I want my ui to be nothing but a text editor.
 
 ## Is this for me?
-What? No. No one should use this. At least not now, I mean fuck, as I'm writing this all I have in this repo is some basic benchmark scripts. One day it might be polished enough for people who aren't me to use, but probably this will never be something good for wide use.
+What? No. Did you not read the last section? No one should use this. At least not now, I mean fuck, as I'm writing this all I have in this repo is some basic benchmark scripts. One day it might be polished enough for people who aren't me to use, but probably this will never be something good for wide use.
 
 ## Roadmap
 First priority is making something that pushes Picotron to the absolute max in terms of performance. Eventually I'll include some benchmarks for entity count. When that's nice and high, I'll actually start making a game with it maybe.
