@@ -1,22 +1,50 @@
 bench = {}
 
--- manual: 16,777,216 cycles/sec; ÷60 for one frame
-bench.CYCLES_PER_FRAME = --
+-- manual: 16,777,216 (2^24) cycles/sec; ÷60 for one frame
+bench.CYCLES_PER_FRAME = 2 ^ 24 / 60
+bench.cases = {}
 
 -- returns: cycles used so far this frame (stat(1) is a fraction of the frame)
-function bench.now() end
+function bench.now()
+  return stat(1) * bench.CYCLES_PER_FRAME
+end
 
--- register a case
--- fn(n, ctx):  runs its OWN loop n times (the timed region)
--- opts.n:      iterations (default: your choice)
--- opts.per:    elements covered per iteration (bulk ops), so results can be per element
--- opts.setup:  untimed; runs before each rep, returns ctx
--- opts.reps:   repetitions (default: your choice)
-function bench.case(name, fn, opts) end
+local function emptyLoopBenchmark(n)
+  for i = 1, n do
+  end
+end
+-- times benchmark(n, args) for cycles used
+function bench.measure(benchmark, n, args)
+  local startCycles = bench.now()
+  benchmark(n, args)
+  local endCycles = bench.now()
+  return endCycles - startCycles
+end
 
--- time ONE call to fn(n, ctx) within the current frame
--- returns: raw cycles (no baseline subtracted)
-function bench.measure(fn, n, ctx) end
+-- Wrapper method for measuring a benchmark function and empty loop baseline. Raw values from measure
+-- benchmark(n, args):  function to be benched. loops n times internally, passes result of setup as args.
+-- n:                   n to be passed to benchmark
+-- args:                args to be passed to benchmark
+--
+-- returns:
+--  benchcycles:  number of cycles it took to run the benchmark
+--  basecycles: number of cycles it took to run the empty loop benchmark
+--
+function bench.measureWithBaseline(benchmark, n, args)
+  local benchcycles = bench.measure(benchmark, n, args)
+  local basecycles = bench.measure(emptyLoopBenchmark, n)
+
+  return benchcycles, basecycles
+end
+
+-- Adds a case for benchmarking to an ordered list
+-- name:                unique name used for console output
+-- benchmark(n, args):  function to be benched. loops n times internally, passes result of setup as args.
+-- opts.n:              n to be passed to benchmark. Default 1000
+-- opts.elementsPerN:   Number of elements that are processed per run of the internal loop. Just modifies final output. Default 1
+-- opts.setup:          returns args to be passed to benchmark. Untimed, and run before each rep. Default nil
+-- opts.reps:           Number of steps this test will be repeated for, the minimum result being selected for the record. Default 5
+function bench.case(name, benchmark, opts) end
 
 -- run the next (case, rep); call once per _update
 -- returns: true when every case has run all of its reps
@@ -30,4 +58,11 @@ function bench.results() end
 function bench.draw(x, y) end
 
 -- stretch: double n until the case uses ~40% of a frame; returns the chosen n
-function bench.calibrate(fn, ctx) end
+function bench.calibrate(benchmark, args) end
+
+function bench.doUpdate() end
+function bench.doInit()
+  printh(bench.measure(emptyLoopBenchmark, 1000) / 1000)
+  printh(bench.measure(emptyLoopBenchmark, 2000) / 2000)
+  printh(bench.measure(emptyLoopBenchmark, 4000) / 4000)
+end
