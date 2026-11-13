@@ -44,7 +44,22 @@ end
 -- opts.elementsPerN:   Number of elements that are processed per run of the internal loop. Just modifies final output. Default 1
 -- opts.setup:          returns args to be passed to benchmark. Untimed, and run before each rep. Default nil
 -- opts.reps:           Number of steps this test will be repeated for, the minimum result being selected for the record. Default 5
-function bench.case(name, benchmark, opts) end
+function bench.case(name, benchmark, opts)
+  local caseOpts = opts or {}
+  bench.cases[#bench.cases + 1] = {
+    name = name,
+    benchmark = benchmark,
+    n = caseOpts.n or 1000,
+    elementsPerN = caseOpts.elementsPerN or 1,
+    setup = caseOpts.setup,
+    reps = caseOpts.reps or 5,
+    repsDone = 0,
+    minimums = {
+      benchcycles = math.huge,
+      basecycles = math.huge,
+    },
+  }
+end
 
 -- run the next (case, rep); call once per _update
 -- returns: true when every case has run all of its reps
