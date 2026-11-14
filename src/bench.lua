@@ -10,7 +10,8 @@ function bench.now()
 end
 
 local function emptyLoopBenchmark(n)
-  for i = 1, n do
+  ---@diagnostic disable-next-line: empty-block
+  for _ = 1, n do
   end
 end
 -- times benchmark(n, args) for cycles used
