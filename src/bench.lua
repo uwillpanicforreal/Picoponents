@@ -61,9 +61,18 @@ function bench.case(name, benchmark, opts)
   }
 end
 
--- run the next (case, rep); call once per _update
--- returns: true when every case has run all of its reps
-function bench.step() end
+-- Iterate through each case and run the first benchmark where repsDone<reps.
+-- Runs setup untimed, then updates minimums and increments repsDone for current case
+-- returns: true when, for each case, repsDone>=reps, otherwise false
+function bench.step()
+  for _, case in ipairs(bench.cases) do
+    if case.repsDone < case.reps then
+      --do rep
+      return false
+    end
+  end
+  return true
+end
 
 -- returns: list of { name, cycles, per_element, reps }
 -- with the baseline subtracted and divided by n (and by per)
