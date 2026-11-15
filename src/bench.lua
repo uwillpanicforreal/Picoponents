@@ -12,7 +12,8 @@
 ---@field setup? bench.Setup
 ---@field reps integer Number of reps this test will be repeated for, the minimum result being selected for the record
 ---@field repsDone integer Number of reps that have been done
----@field minimums {benchcycles: number, basecycles: number} lowest number of cycles taken for both the bench and its baseline
+---@field minimums {benchcycles: number,overheadcycles: number} lowest number of cycles taken for both the bench and its overhead
+---@field result number Cycles per element, taking into account n, elementsPerN, and overheadcycles. Updates every rep.
 
 ---Options for a given case
 ---@class bench.CaseOpts
@@ -22,19 +23,20 @@
 ---@field reps? integer Number of reps this test will be repeated for, the minimum result being selected for the record. Default 5
 
 ---@class bench
-bench = {}
-
----manual: 16,777,216 (2^24) cycles/sec; ÷60 for one frame
-bench.CYCLES_PER_FRAME = 2 ^ 24 / 60
----@type bench.Case[]
-bench.cases = {}
+---@field cases bench.Case[]
+---@field CYCLES_PER_FRAME number
+bench = {
+  cases = {},
+  ---manual: 16,777,216 (2^24) cycles/sec; ÷60 for one frame
+  CYCLES_PER_FRAME = 2 ^ 24 / 60,
+}
 
 ---@return number cycles cycles used so far this frame (stat(1) is a fraction of the frame)
 function bench.now()
   return stat(1) * bench.CYCLES_PER_FRAME
 end
 
----benchmark for an empty loop, used to get baseline
+---benchmark for an empty loop, used to get overhead
 ---@type bench.Benchmark
 local function emptyLoopBenchmark(n)
   ---@diagnostic disable-next-line: empty-block
@@ -46,7 +48,7 @@ end
 ---@param benchmark bench.Benchmark
 ---@param n integer number of iterations to be passed to benchmark
 ---@param args any arguments to be passed to benchmark
----@return number cycles number of cycles it took to run benchmark, raw, without any consideration for overhead or baseline
+---@return number cycles number of cycles it took to run benchmark, raw, without any consideration for fixed cost or overhead
 function bench.measure(benchmark, n, args)
   local startCycles = bench.now()
   benchmark(n, args)
@@ -54,24 +56,24 @@ function bench.measure(benchmark, n, args)
   return endCycles - startCycles
 end
 
----Wrapper method for measuring a benchmark function and empty loop baseline
+---Wrapper method for measuring a benchmark function and empty loop overhead
 ---@param benchmark bench.Benchmark
 ---@param n integer n to be passed to benchmark
 ---@param args any args to be passed to benchmark
 ---@return number benchcycles number of cycles it took to run the benchmark
----@return number basecycles number of cycles it took to run the empty loop benchmark
-function bench.measureWithBaseline(benchmark, n, args)
+---@return number overheadcycles number of cycles it took to run the empty loop benchmark
+function bench.measureWithOverhead(benchmark, n, args)
   local benchcycles = bench.measure(benchmark, n, args)
-  local basecycles = bench.measure(emptyLoopBenchmark, n)
+  local overheadcycles = bench.measure(emptyLoopBenchmark, n)
 
-  return benchcycles, basecycles
+  return benchcycles, overheadcycles
 end
 
 ---Adds a case for benchmarking to an ordered list
 ---@param name string unique name used for console output
 ---@param benchmark bench.Benchmark
 ---@param opts? bench.CaseOpts
-function bench.case(name, benchmark, opts)
+function bench.addCase(name, benchmark, opts)
   local caseOpts = opts or {}
   bench.cases[#bench.cases + 1] = {
     name = name,
@@ -83,42 +85,41 @@ function bench.case(name, benchmark, opts)
     repsDone = 0,
     minimums = {
       benchcycles = math.huge,
-      basecycles = math.huge,
+      overheadcycles = math.huge,
     },
+    result = 0,
   }
 end
 
 ---Run the first benchmark where repsDone<reps. Runs setup untimed, then updates minimums and increments repsDone for current case
 ---@return boolean finished true when, for each case, repsDone>=reps, otherwise false
-function bench.step()
+function bench.doStep()
   for _, case in ipairs(bench.cases) do
     if case.repsDone < case.reps then
-      local args = case.setup()
-      local measure = bench.measure(case.benchmark, case.n, args)
-      local overhead = bench.measure(emptyLoopBenchmark, case.n)
-      if measure < case.minimums.basecycles then
-        case.minimums.basecycles = measure
-        case.minimums.benchcycles = overhead
-      end
+      local args = case.setup and case.setup()
+      local measure, overhead = bench.measureWithOverhead(case.benchmark, case.n, args)
+      case.minimums.overheadcycles = math.min(case.minimums.overheadcycles, overhead)
+      case.minimums.benchcycles = math.min(case.minimums.benchcycles, measure)
+      case.repsDone += 1
+      case.result = (case.minimums.benchcycles - case.minimums.overheadcycles) / (case.n * case.elementsPerN)
       return false
     end
   end
   return true
 end
 
--- returns: list of { name, cycles, per_element, reps }
--- with the baseline subtracted and divided by n (and by per)
-function bench.results() end
-
--- draw the results table at x, y (from _draw, only after step() returns true)
-function bench.draw(x, y) end
+---Prints the results of the benchmark using printh
+function bench.printResults()
+  local lines = {}
+  for _, case in ipairs(bench.cases) do
+    table.insert(
+      lines,
+      string.format("\t%-20.20s|%8.2f cycles/element\t|%3d reps", case.name, case.result, case.repsDone)
+    )
+  end
+  printh("Benchmark results:")
+  printh(table.concat(lines, "\n"))
+end
 
 -- stretch: double n until the case uses ~40% of a frame; returns the chosen n
 function bench.calibrate(benchmark, args) end
-
-function bench.doUpdate() end
-function bench.doInit()
-  printh(bench.measure(emptyLoopBenchmark, 1000) / 1000)
-  printh(bench.measure(emptyLoopBenchmark, 2000) / 2000)
-  printh(bench.measure(emptyLoopBenchmark, 4000) / 4000)
-end
