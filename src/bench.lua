@@ -1,5 +1,5 @@
 ---returns args to be passed to benchmark, passing the number of iterations as n. Untimed, and run before each rep
----@alias bench.Setup fun(n: integer): any
+---@alias bench.Setup fun(case:bench.Case): any
 
 ---function to be benched. loops n times internally, takes the result of setup as args.
 ---@alias bench.Benchmark fun(n: integer, args: any)
@@ -96,7 +96,7 @@ end
 function bench.doStep()
   for _, case in ipairs(bench.cases) do
     if case.repsDone < case.reps then
-      local args = case.setup and case.setup(case.n)
+      local args = case.setup and case.setup(case)
       local measure, overhead = bench.measureWithOverhead(case.benchmark, case.n, args)
       case.minimums.overheadcycles = math.min(case.minimums.overheadcycles, overhead)
       case.minimums.benchcycles = math.min(case.minimums.benchcycles, measure)

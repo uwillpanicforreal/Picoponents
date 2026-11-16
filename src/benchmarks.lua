@@ -45,7 +45,7 @@ globalval = 1
 ---@type bench.Benchmark
 local function globalReadBenchmark(n)
   ---@diagnostic disable-next-line: unused-local
-  local dest = 1
+  local dest
   for _ = 1, n do
     ---@diagnostic disable-next-line: unused-local
     dest = globalval
@@ -81,10 +81,28 @@ local function userdataSetBenchmark(n, ud)
     ud:set(i, 1)
   end
 end
----setup function for userdataSetBenchmark
----@type bench.Setup
-local function userdataSetBenchmarkSetup(n)
-  return userdata("i16", n)
+
+---benchmark for setting one value in a userdata with a hoisted set method
+---@type bench.Benchmark
+---@param ud userdata
+local function userdataHoistedSetBenchmark(n, ud)
+  local udSet = ud.set
+  for i = 0, n - 1 do
+    udSet(ud, i, 1)
+  end
+end
+
+---benchmark for getting one value in a userdata using a hoisted ud:get method
+---@type bench.Benchmark
+---@param ud userdata
+local function userdataHoistedGetBenchmark(n, ud)
+  ---@diagnostic disable-next-line: unused-local
+  local dest
+  local udGet = ud.get
+  for i = 0, n - 1 do
+    ---@diagnostic disable-next-line: unused-local
+    dest = udGet(ud, i)
+  end
 end
 
 ---benchmark for getting one value in a userdata
@@ -98,13 +116,15 @@ local function userdataGetBenchmark(n, ud)
     dest = ud:get(i)
   end
 end
----Sets up a 100 element userdata for benchmark args
+---Sets up an n element userdata for benchmark args
 ---@type bench.Setup
-local function userdata100ElementSetup(n)
+local function userdataNElementSetup(case)
+  local n = case.n
   local ud = userdata("i16", n)
+  local udSet = ud.set
 
   for i = 0, n - 1 do
-    ud:set(i, 1)
+    udSet(ud, i, 1)
   end
 
   return ud
@@ -127,8 +147,39 @@ end
 ---@param ud userdata
 local function userdataIndexedSetBenchmark(n, ud)
   for i = 0, n - 1 do
-    ---@diagnostic disable-next-line: unused-local
     ud[i] = 2
+  end
+end
+
+---Sets up an n element userdata for benchmark args
+---@type bench.Setup
+local function userdataElementsPerNSetup(case)
+  local n = case.elementsPerN
+  local ud = userdata("i16", n)
+  local udSet = ud.set
+
+  for i = 0, n - 1 do
+    udSet(ud, i, 1)
+  end
+
+  return ud
+end
+
+---benchmark for adding to one value in a userdata
+---@type bench.Benchmark
+---@param ud userdata
+local function userdataBulkAddBenchmark(n, ud)
+  for _ = 0, n - 1 do
+    ud:add(1, true)
+  end
+end
+
+---benchmark for multiplying one value in a userdata
+---@type bench.Benchmark
+---@param ud userdata
+local function userdataBulkMultBenchmark(n, ud)
+  for _ = 0, n - 1 do
+    ud:mul(2, true)
   end
 end
 
@@ -141,8 +192,20 @@ function benchmarks.init()
   bench.addCase("global read", globalReadBenchmark)
   bench.addCase("function creation", functionCreationBenchmark)
   bench.addCase("upvalue function creation", upvalueBenchmark)
-  bench.addCase("setting 1 userdata value", userdataSetBenchmark, { setup = userdataSetBenchmarkSetup })
-  bench.addCase("getting 1 userdata value", userdataGetBenchmark, { setup = userdata100ElementSetup })
-  bench.addCase("getting 1 userdata value via ud[x]", userdataIndexedGetBenchmark, { setup = userdata100ElementSetup })
-  bench.addCase("setting 1 userdata value via ud[x]", userdataIndexedSetBenchmark, { setup = userdata100ElementSetup })
+  bench.addCase("getting 1 ud value", userdataGetBenchmark, { setup = userdataNElementSetup })
+  bench.addCase("getting 1 ud value via ud[x]", userdataIndexedGetBenchmark, { setup = userdataNElementSetup })
+  bench.addCase("getting 1 ud value with hoisted get", userdataHoistedGetBenchmark, { setup = userdataNElementSetup })
+  bench.addCase("setting 1 ud value", userdataSetBenchmark, { setup = userdataNElementSetup })
+  bench.addCase("setting 1 ud value via ud[x]", userdataIndexedSetBenchmark, { setup = userdataNElementSetup })
+  bench.addCase("setting 1 ud value with hoisted set", userdataHoistedSetBenchmark, { setup = userdataNElementSetup })
+  bench.addCase(
+    "userdata bulk add",
+    userdataBulkAddBenchmark,
+    { setup = userdataElementsPerNSetup, elementsPerN = 100 }
+  )
+  bench.addCase(
+    "userdata bulk mult",
+    userdataBulkMultBenchmark,
+    { setup = userdataElementsPerNSetup, elementsPerN = 100 }
+  )
 end
