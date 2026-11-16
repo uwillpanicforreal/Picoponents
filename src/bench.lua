@@ -117,9 +117,5 @@ function bench.printResults()
       string.format("\t%-20.20s|%8.2f cycles/element\t|%3d reps", case.name, case.result, case.repsDone)
     )
   end
-  printh("Benchmark results:")
-  printh(table.concat(lines, "\n"))
+  printh("Benchmark results:\n" .. table.concat(lines, "\n"))
 end
-
--- stretch: double n until the case uses ~40% of a frame; returns the chosen n
-function bench.calibrate(benchmark, args) end

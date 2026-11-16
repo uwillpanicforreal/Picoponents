@@ -1,9 +1,6 @@
 {
     "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
     "workspace.checkThirdParty": false,
-    "workspace.library": [
-        "~/.local/share/picotron-definitions/lib"
-    ],
     "runtime.version": "Lua 5.4",
     "diagnostics.disable": [
         "lowercase-global"
@@ -43,5 +40,8 @@
     },
     "runtime.special": {
         "include": "require"
-    }
+    },
+    "diagnostics.globals": [
+        "require"
+    ]
 }
